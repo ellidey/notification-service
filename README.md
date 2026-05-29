@@ -37,6 +37,18 @@ docker compose exec -T app php artisan migrate --force
 http://localhost
 ```
 
+Swagger UI доступен по адресу:
+
+```text
+http://localhost/api/docs
+```
+
+OpenAPI JSON:
+
+```text
+http://localhost/api/docs/openapi
+```
+
 Проверить состояние контейнеров:
 
 ```bash

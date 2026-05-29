@@ -8,6 +8,7 @@ RUN apk add --no-cache \
     icu-dev \
     libzip-dev \
     postgresql-dev \
+    su-exec \
     unzip \
     zip \
     && docker-php-ext-install \
@@ -20,8 +21,12 @@ RUN apk add --no-cache \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY docker/php/conf.d/99-performance.ini /usr/local/etc/php/conf.d/99-performance.ini
+COPY docker/php/php-fpm.d/zz-laravel.conf /usr/local/etc/php-fpm.d/zz-laravel.conf
+COPY docker/php/entrypoint.sh /usr/local/bin/laravel-entrypoint
 
 RUN addgroup -g 1000 laravel \
-    && adduser -G laravel -u 1000 -D laravel
+    && adduser -G laravel -u 1000 -D laravel \
+    && chmod +x /usr/local/bin/laravel-entrypoint
 
+ENTRYPOINT ["laravel-entrypoint"]
 CMD ["php-fpm"]

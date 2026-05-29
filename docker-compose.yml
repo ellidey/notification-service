@@ -11,6 +11,7 @@ services:
       - storage-framework-cache:/var/www/html/storage/framework/cache
       - storage-framework-sessions:/var/www/html/storage/framework/sessions
       - storage-framework-views:/var/www/html/storage/framework/views
+      - storage-api-docs:/var/www/html/storage/api-docs
       - storage-logs:/var/www/html/storage/logs
       - bootstrap-cache:/var/www/html/bootstrap/cache
     depends_on:
@@ -58,6 +59,7 @@ services:
       - storage-framework-cache:/var/www/html/storage/framework/cache
       - storage-framework-sessions:/var/www/html/storage/framework/sessions
       - storage-framework-views:/var/www/html/storage/framework/views
+      - storage-api-docs:/var/www/html/storage/api-docs
       - storage-logs:/var/www/html/storage/logs
       - bootstrap-cache:/var/www/html/bootstrap/cache
     depends_on:
@@ -70,5 +72,6 @@ volumes:
   storage-framework-cache:
   storage-framework-sessions:
   storage-framework-views:
+  storage-api-docs:
   storage-logs:
   bootstrap-cache:

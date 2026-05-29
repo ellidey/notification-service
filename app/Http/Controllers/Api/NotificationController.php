@@ -8,9 +8,27 @@ use App\Http\Requests\StoreNotificationRequest;
 use App\Http\Resources\NotificationResource;
 use App\Models\Notification;
 use Illuminate\Http\JsonResponse;
+use OpenApi\Attributes as OA;
 
 class NotificationController extends Controller
 {
+    #[OA\Post(
+        path: '/api/notifications',
+        summary: 'Create notification',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: '#/components/schemas/CreateNotificationRequest'),
+        ),
+        tags: ['Notifications'],
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'Notification created',
+                content: new OA\JsonContent(ref: '#/components/schemas/NotificationResponse'),
+            ),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ],
+    )]
     public function store(StoreNotificationRequest $request, CreateNotificationAction $createNotification): JsonResponse
     {
         $notification = $createNotification->handle(
@@ -24,6 +42,27 @@ class NotificationController extends Controller
             ->setStatusCode(201);
     }
 
+    #[OA\Get(
+        path: '/api/notifications/{notification}',
+        summary: 'Get notification',
+        tags: ['Notifications'],
+        parameters: [
+            new OA\Parameter(
+                name: 'notification',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid'),
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Notification found',
+                content: new OA\JsonContent(ref: '#/components/schemas/NotificationResponse'),
+            ),
+            new OA\Response(response: 404, description: 'Notification not found'),
+        ],
+    )]
     public function show(Notification $notification): NotificationResource
     {
         return new NotificationResource($notification->load('deliveries'));
