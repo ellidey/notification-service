@@ -115,7 +115,7 @@ docker compose logs -f queue
 Он запускает:
 
 ```bash
-php artisan queue:work --tries=3 --backoff=10
+php artisan queue:work --queue=notifications,default --tries=3 --backoff=10
 ```
 
 Для разработки достаточно держать контейнер `queue` запущенным. Если изменялась бизнес-логика job-классов, worker лучше перезапустить:

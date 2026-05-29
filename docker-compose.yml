@@ -52,7 +52,7 @@ services:
       dockerfile: Dockerfile
     container_name: notification-service-queue
     working_dir: /var/www/html
-    command: php artisan queue:work --tries=3 --backoff=10
+    command: php artisan queue:work --queue=notifications,default --tries=3 --backoff=10
     volumes:
       - .:/var/www/html:cached
       - vendor-data:/var/www/html/vendor
