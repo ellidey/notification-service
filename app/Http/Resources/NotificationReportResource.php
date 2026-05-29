@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\NotificationReport;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use OpenApi\Attributes as OA;
@@ -47,18 +48,21 @@ class NotificationReportResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        /** @var NotificationReport $report */
+        $report = $this->resource;
+
         return [
-            'id' => $this->id,
-            'user_id' => $this->user_id,
-            'status' => $this->status->value,
-            'period_from' => $this->period_from?->toISOString(),
-            'period_to' => $this->period_to?->toISOString(),
-            'file_path' => $this->file_path,
-            'error_message' => $this->error_message,
-            'completed_at' => $this->completed_at?->toISOString(),
-            'failed_at' => $this->failed_at?->toISOString(),
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
+            'id' => $report->id,
+            'user_id' => $report->user_id,
+            'status' => $report->status->value,
+            'period_from' => $report->period_from->toISOString(),
+            'period_to' => $report->period_to->toISOString(),
+            'file_path' => $report->file_path,
+            'error_message' => $report->error_message,
+            'completed_at' => $report->completed_at?->toISOString(),
+            'failed_at' => $report->failed_at?->toISOString(),
+            'created_at' => $report->created_at?->toISOString(),
+            'updated_at' => $report->updated_at?->toISOString(),
         ];
     }
 }

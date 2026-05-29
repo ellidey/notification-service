@@ -29,7 +29,7 @@ class NotificationReportExport implements FromCollection
 
         $deliveries = $notifications->flatMap->deliveries;
 
-        return collect([
+        $rows = collect([
             ['Показатель', 'Значение'],
             ['ID пользователя', $this->userId],
             ['Период с', $this->formatDate($this->periodFrom)],
@@ -41,18 +41,22 @@ class NotificationReportExport implements FromCollection
             ['Ошибок доставки', $deliveries->where('status', NotificationStatus::Error)->count()],
             [],
             ['ID уведомления', 'Дата создания', 'Канал', 'Статус', 'Попытки', 'Последняя ошибка'],
-        ])->merge(
-            $notifications->flatMap(fn (Notification $notification): Collection => $notification->deliveries->map(
-                fn ($delivery): array => [
+        ]);
+
+        foreach ($notifications as $notification) {
+            foreach ($notification->deliveries as $delivery) {
+                $rows->push([
                     $notification->id,
                     $this->formatDate($notification->created_at),
                     $delivery->channel->value,
                     $delivery->status->value,
                     $delivery->attempts,
                     $delivery->last_error,
-                ],
-            )),
-        );
+                ]);
+            }
+        }
+
+        return $rows;
     }
 
     private function formatDate(?CarbonInterface $date): ?string

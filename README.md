@@ -2,7 +2,7 @@
 
 Сервис уведомлений на Laravel 13, PHP 8.4 и PostgreSQL.
 
-Проект готовится под тестовое задание: REST API для уведомлений, асинхронная доставка через очереди, каналы доставки и отчётность.
+Проект реализует REST API для создания уведомлений, асинхронной доставки через очереди, просмотра истории доставок и формирования отчётов.
 
 ## Стек
 
@@ -13,8 +13,14 @@
 - Docker Compose
 - Laravel Queue с database driver
 - Laravel Pint с preset `psr12`
+- L5 Swagger
+- Maatwebsite Excel
 
-## Быстрый запуск для разработки
+## Важно
+
+Текущий `docker-compose.yml` предназначен только для локальной разработки.
+
+## Быстрый запуск
 
 Требования:
 
@@ -31,13 +37,13 @@ docker compose up -d
 docker compose exec -T app php artisan migrate --force
 ```
 
-После запуска приложение доступно по адресу:
+Проверить контейнеры:
 
-```text
-http://localhost
+```bash
+docker compose ps
 ```
 
-Swagger UI доступен по адресу:
+Swagger UI:
 
 ```text
 http://localhost/api/docs
@@ -49,13 +55,117 @@ OpenAPI JSON:
 http://localhost/api/docs/openapi
 ```
 
-Проверить состояние контейнеров:
+## Очереди
+
+В `docker-compose.yml` есть отдельный сервис `queue`.
+
+Он запускает:
 
 ```bash
-docker compose ps
+php artisan queue:work --queue=reports,notifications,default --tries=3 --backoff=10
 ```
 
-## Повседневная разработка
+Очередь `notifications` обрабатывает доставку уведомлений. Очередь `reports` формирует файлы отчётов.
+
+Если изменялась бизнес-логика job-классов, worker лучше перезапустить:
+
+```bash
+docker compose restart queue
+```
+
+## API: уведомления
+
+### Создать уведомление
+
+```bash
+curl -X POST http://localhost/api/notifications \
+  -H "Content-Type: application/json" \
+  -d "{\"user_id\":1001,\"message\":\"Тестовое уведомление\",\"channels\":[\"email\",\"telegram\"]}"
+```
+
+Ответ `201 Created` вернёт уведомление и доставки по каналам. Сами доставки выполняются асинхронно через очередь.
+
+### Получить уведомление
+
+```bash
+curl http://localhost/api/notifications/{notification_id}
+```
+
+### Получить историю уведомлений пользователя
+
+```bash
+curl "http://localhost/api/users/1001/notifications"
+```
+
+Фильтры:
+
+```bash
+curl "http://localhost/api/users/1001/notifications?channel=telegram&status=error"
+```
+
+Доступные каналы:
+
+- `email`
+- `telegram`
+
+Доступные статусы доставок:
+
+- `processing`
+- `sent`
+- `error`
+
+## API: отчёты
+
+Отчёт создаётся асинхронно:
+
+1. Создать отчёт.
+2. Проверять статус отчёта.
+3. Когда статус станет `ready`, скачать CSV-файл.
+
+### Создать отчёт
+
+```bash
+curl -X POST http://localhost/api/users/1001/notifications/reports \
+  -H "Content-Type: application/json" \
+  -d "{\"period_from\":\"2026-05-01T00:00:00Z\",\"period_to\":\"2026-05-31T23:59:59Z\"}"
+```
+
+Ответ `202 Accepted` вернёт отчёт со статусом `pending`.
+
+### Получить список отчётов пользователя
+
+```bash
+curl "http://localhost/api/users/1001/notifications/reports"
+```
+
+Фильтр по статусу:
+
+```bash
+curl "http://localhost/api/users/1001/notifications/reports?status=ready"
+```
+
+Доступные статусы отчётов:
+
+- `pending`
+- `processing`
+- `ready`
+- `error`
+
+### Проверить конкретный отчёт
+
+```bash
+curl http://localhost/api/notifications/reports/{report_id}
+```
+
+### Скачать готовый отчёт
+
+```bash
+curl -L -o report.csv http://localhost/api/notifications/reports/{report_id}/download
+```
+
+Если отчёт ещё не готов, endpoint вернёт `409 Conflict`.
+
+## Разработка
 
 Запустить проект:
 
@@ -69,7 +179,7 @@ docker compose up -d
 docker compose down
 ```
 
-Выполнить команду Artisan:
+Выполнить Artisan-команду:
 
 ```bash
 docker compose exec -T app php artisan route:list
@@ -87,6 +197,12 @@ docker compose exec -T app php artisan migrate
 docker compose exec -T app php artisan test
 ```
 
+Запустить статический анализ PHPStan/Larastan:
+
+```bash
+docker compose exec -T app composer analyse
+```
+
 Запустить форматирование PSR-12:
 
 ```bash
@@ -99,6 +215,12 @@ docker compose exec -T app composer format
 docker compose exec -T app composer format:test
 ```
 
+Пересобрать Swagger-документацию:
+
+```bash
+docker compose exec -T app php artisan l5-swagger:generate
+```
+
 Посмотреть логи:
 
 ```bash
@@ -106,22 +228,6 @@ docker compose logs -f app
 docker compose logs -f nginx
 docker compose logs -f postgres
 docker compose logs -f queue
-```
-
-## Очереди
-
-В `docker-compose.yml` есть отдельный сервис `queue`.
-
-Он запускает:
-
-```bash
-php artisan queue:work --queue=reports,notifications,default --tries=3 --backoff=10
-```
-
-Для разработки достаточно держать контейнер `queue` запущенным. Если изменялась бизнес-логика job-классов, worker лучше перезапустить:
-
-```bash
-docker compose restart queue
 ```
 
 ## База данных
@@ -150,13 +256,13 @@ docker compose exec -T app php artisan migrate --force
 
 ## Docker на Windows
 
-На Windows bind mount проекта может сильно замедлять Laravel, потому что PHP читает много мелких файлов через файловый мост Docker Desktop.
+На Windows bind mount проекта может замедлять Laravel, потому что PHP читает много мелких файлов через файловый мост Docker Desktop.
 
-В проекте уже применены оптимизации:
+В проекте применены оптимизации:
 
 - исходный код подключён как `.:/var/www/html:cached`;
 - `vendor` вынесен в Docker volume `vendor-data`;
-- Laravel runtime cache, compiled views, sessions, logs и `bootstrap/cache` вынесены в Docker volumes;
+- Laravel runtime cache, compiled views, sessions, logs, `storage/api-docs` и `bootstrap/cache` вынесены в Docker volumes;
 - включены OPcache и realpath cache.
 
 После изменения `composer.lock` нужно обновить зависимости внутри volume:
@@ -176,10 +282,11 @@ docker compose up -d
 
 ## Проверки качества
 
-Перед сдачей или pull request нужно выполнить:
+Перед сдачей нужно выполнить:
 
 ```bash
 docker compose exec -T app composer validate --strict
+docker compose exec -T app composer analyse
 docker compose exec -T app composer format:test
 docker compose exec -T app php artisan test
 ```
@@ -191,12 +298,6 @@ docker compose exec -T app php artisan test
 ```text
 pint.json
 ```
-
-## Production
-
-Текущий `docker-compose.yml` предназначен только для локальной разработки.
-
-Для production нужен отдельный Docker/инфраструктурный конфиг с production-переменными окружения, безопасными секретами, другим процессом сборки и отдельными правилами деплоя.
 
 ## Полезные команды
 
@@ -224,16 +325,19 @@ docker compose exec -T app php artisan optimize:clear
 docker compose exec -T app php artisan --version
 ```
 
-Проверить доступность HTTP:
+## Архитектурные принципы
 
-```bash
-curl http://localhost
-```
+- HTTP-слой остаётся тонким: контроллеры принимают запросы и делегируют работу action/job-классам.
+- Валидация входящих данных выполняется через FormRequest.
+- Доставка уведомлений выполняется асинхронно через queue jobs.
+- Формирование отчётов выполняется асинхронно через queue jobs.
+- Каналы доставки подключаются через интерфейс и registry.
+- Ошибки доставки сохраняются в базе и приводят к повторным попыткам через queue retry/backoff.
 
-## Архитектурные принципы проекта
+## Улучшения перед production
 
-- HTTP-слой должен оставаться тонким: контроллеры принимают запросы и делегируют работу сервисам.
-- Валидация входящих данных должна выполняться через FormRequest.
-- Доставка уведомлений должна выполняться асинхронно через queue jobs.
-- Каналы доставки должны подключаться через интерфейс/registry, чтобы новый канал добавлялся без изменения существующей логики отправки.
-- Ошибки доставки должны сохраняться в базе и приводить к повторным попыткам через queue retry/backoff.
+- Добавить аутентификацию и авторизацию для доступа только к своим уведомлениям и отчётам.
+- Настроить production-очереди через Supervisor или Horizon с мониторингом failed jobs.
+- Подключить реальные email и Telegram провайдеры вместо текущих sender-заглушек.
+- Вынести retry/backoff/max attempts в конфигурацию для разных каналов доставки.
+- Ограничить максимальный период отчёта и добавить rate limiting для тяжёлых API-запросов.

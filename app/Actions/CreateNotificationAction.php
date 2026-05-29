@@ -6,6 +6,7 @@ use App\Enums\NotificationChannel;
 use App\Enums\NotificationStatus;
 use App\Jobs\SendNotificationDeliveryJob;
 use App\Models\Notification;
+use App\Models\NotificationDelivery;
 use Illuminate\Support\Facades\DB;
 
 class CreateNotificationAction
@@ -21,6 +22,7 @@ class CreateNotificationAction
             $deliveryIds = [];
 
             foreach (array_unique($channels) as $channel) {
+                /** @var NotificationDelivery $delivery */
                 $delivery = $notification->deliveries()->create([
                     'channel' => NotificationChannel::from($channel),
                     'status' => NotificationStatus::Processing,

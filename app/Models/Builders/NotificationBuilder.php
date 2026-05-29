@@ -19,7 +19,10 @@ class NotificationBuilder extends Builder
     public function withFilteredDeliveries(?string $channel, ?string $status): self
     {
         return $this->with([
-            'deliveries' => fn ($query) => $this->applyDeliveryFilters($query, $channel, $status),
+            'deliveries' => function ($query) use ($channel, $status): void {
+                /** @var HasMany $query */
+                $this->applyDeliveryRelationFilters($query, $channel, $status);
+            },
         ]);
     }
 
@@ -31,14 +34,25 @@ class NotificationBuilder extends Builder
 
         return $this->whereHas(
             'deliveries',
-            fn ($query) => $this->applyDeliveryFilters($query, $channel, $status),
+            fn (Builder $query): Builder => $this->applyDeliveryBuilderFilters($query, $channel, $status),
         );
     }
 
-    private function applyDeliveryFilters(Builder|HasMany $query, ?string $channel, ?string $status): Builder|HasMany
+    private function applyDeliveryBuilderFilters(Builder $query, ?string $channel, ?string $status): Builder
     {
         return $query
-            ->when($channel, fn (Builder|HasMany $filteredQuery): Builder|HasMany => $filteredQuery->where('channel', $channel))
-            ->when($status, fn (Builder|HasMany $filteredQuery): Builder|HasMany => $filteredQuery->where('status', $status));
+            ->when($channel, fn (Builder $filteredQuery): Builder => $filteredQuery->where('channel', $channel))
+            ->when($status, fn (Builder $filteredQuery): Builder => $filteredQuery->where('status', $status));
+    }
+
+    private function applyDeliveryRelationFilters(HasMany $query, ?string $channel, ?string $status): void
+    {
+        if ($channel) {
+            $query->where('channel', $channel);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
     }
 }

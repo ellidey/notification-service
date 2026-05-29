@@ -3,11 +3,25 @@
 namespace App\Models;
 
 use App\Enums\ReportStatus;
+use Carbon\CarbonInterface;
 use Database\Factories\NotificationReportFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property string $id
+ * @property int $user_id
+ * @property ReportStatus $status
+ * @property CarbonInterface $period_from
+ * @property CarbonInterface $period_to
+ * @property string|null $file_path
+ * @property string|null $error_message
+ * @property CarbonInterface|null $completed_at
+ * @property CarbonInterface|null $failed_at
+ * @property CarbonInterface|null $created_at
+ * @property CarbonInterface|null $updated_at
+ */
 class NotificationReport extends Model
 {
     /** @use HasFactory<NotificationReportFactory> */

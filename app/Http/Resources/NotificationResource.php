@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use OpenApi\Attributes as OA;
@@ -47,13 +48,16 @@ class NotificationResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        /** @var Notification $notification */
+        $notification = $this->resource;
+
         return [
-            'id' => $this->id,
-            'user_id' => $this->user_id,
-            'message' => $this->message,
+            'id' => $notification->id,
+            'user_id' => $notification->user_id,
+            'message' => $notification->message,
             'status' => $this->aggregateStatus(),
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
+            'created_at' => $notification->created_at?->toISOString(),
+            'updated_at' => $notification->updated_at?->toISOString(),
             'deliveries' => NotificationDeliveryResource::collection($this->whenLoaded('deliveries')),
         ];
     }

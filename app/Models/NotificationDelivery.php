@@ -4,12 +4,28 @@ namespace App\Models;
 
 use App\Enums\NotificationChannel;
 use App\Enums\NotificationStatus;
+use Carbon\CarbonInterface;
 use Database\Factories\NotificationDeliveryFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $notification_id
+ * @property NotificationChannel $channel
+ * @property NotificationStatus $status
+ * @property int $attempts
+ * @property int $max_attempts
+ * @property string|null $last_error
+ * @property CarbonInterface|null $available_at
+ * @property CarbonInterface|null $sent_at
+ * @property CarbonInterface|null $failed_at
+ * @property CarbonInterface|null $created_at
+ * @property CarbonInterface|null $updated_at
+ * @property-read Notification $notification
+ */
 class NotificationDelivery extends Model
 {
     /** @use HasFactory<NotificationDeliveryFactory> */
