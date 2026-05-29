@@ -14,7 +14,7 @@ class NotificationController extends Controller
 {
     #[OA\Post(
         path: '/api/notifications',
-        summary: 'Create notification',
+        summary: 'Создать уведомление',
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(ref: '#/components/schemas/CreateNotificationRequest'),
@@ -23,10 +23,10 @@ class NotificationController extends Controller
         responses: [
             new OA\Response(
                 response: 201,
-                description: 'Notification created',
+                description: 'Уведомление создано',
                 content: new OA\JsonContent(ref: '#/components/schemas/NotificationResponse'),
             ),
-            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(response: 422, description: 'Ошибка валидации'),
         ],
     )]
     public function store(StoreNotificationRequest $request, CreateNotificationAction $createNotification): JsonResponse
@@ -44,7 +44,7 @@ class NotificationController extends Controller
 
     #[OA\Get(
         path: '/api/notifications/{notification}',
-        summary: 'Get notification',
+        summary: 'Получить уведомление',
         tags: ['Notifications'],
         parameters: [
             new OA\Parameter(
@@ -57,10 +57,10 @@ class NotificationController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Notification found',
+                description: 'Уведомление найдено',
                 content: new OA\JsonContent(ref: '#/components/schemas/NotificationResponse'),
             ),
-            new OA\Response(response: 404, description: 'Notification not found'),
+            new OA\Response(response: 404, description: 'Уведомление не найдено'),
         ],
     )]
     public function show(Notification $notification): NotificationResource

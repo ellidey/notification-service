@@ -13,7 +13,7 @@ class UserNotificationController extends Controller
 {
     #[OA\Get(
         path: '/api/users/{userId}/notifications',
-        summary: 'Get user notification history',
+        summary: 'Получить историю уведомлений пользователя',
         tags: ['Notifications'],
         parameters: [
             new OA\Parameter(
@@ -44,10 +44,10 @@ class UserNotificationController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Notification list',
+                description: 'Список уведомлений',
                 content: new OA\JsonContent(ref: '#/components/schemas/PaginatedNotificationsResponse'),
             ),
-            new OA\Response(response: 422, description: 'Filter validation error'),
+            new OA\Response(response: 422, description: 'Ошибка валидации фильтров'),
         ],
     )]
     public function __invoke(
