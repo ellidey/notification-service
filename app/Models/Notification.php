@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Builders\NotificationBuilder;
 use Database\Factories\NotificationFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +20,12 @@ class Notification extends Model
         'user_id',
         'message',
     ];
+
+    public function newEloquentBuilder($query): NotificationBuilder
+    {
+        /** @var Builder<Notification> $query */
+        return new NotificationBuilder($query);
+    }
 
     public function deliveries(): HasMany
     {
